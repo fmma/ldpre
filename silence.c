@@ -12,6 +12,7 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <execinfo.h>
 #include <string.h>
 #include <stdarg.h>
@@ -33,11 +34,14 @@ int printf(const char *fmt, ...)
     Dl_info info;
     if (dladdr(caller, &info) && info.dli_fname)
     {
-        if (strstr(info.dli_fname, "libx.so"))
+        const char *silence_lib = getenv("SILENCE");
+        if (silence_lib && strstr(info.dli_fname, silence_lib))
         {
             va_list args;
             va_start(args, fmt);
-            FILE *logfile = fopen("libx.so.log", "a");
+            char logfile_name[256];
+            snprintf(logfile_name, sizeof(logfile_name), "%s.log", silence_lib);
+            FILE *logfile = fopen(logfile_name, "a");
             int ret = real_vfprintf(logfile, fmt, args);
             fclose(logfile);
             va_end(args);
