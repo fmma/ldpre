@@ -113,9 +113,29 @@ static char *get_fd_path(int fd)
     return NULL;
 }
 
+static int should_tee_file(const char *path)
+{
+    if (!path)
+        return 0;
+    
+    const char *ext = strrchr(path, '.');
+    if (!ext)
+        return 0;
+    
+    ext++; // Skip the dot
+    
+    return (strcmp(ext, "ll") == 0 ||
+            strcmp(ext, "c") == 0 ||
+            strcmp(ext, "cpp") == 0 ||
+            strcmp(ext, "py") == 0);
+}
+
 static void write_to_tee(const char *original_path, const void *buf, size_t count)
 {
     if (!original_path || count == 0)
+        return;
+    
+    if (!should_tee_file(original_path))
         return;
 
     char tee_path[PATH_MAX * 2];
